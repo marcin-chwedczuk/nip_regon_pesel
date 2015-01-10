@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pl">
+    <head>
+        <meta charset="utf-8">
+        <title>Generatory</title>
+    </head>
+    <body>
+        <h2>PESEL</h2>
+        <table>
+            <tr>
+                <td>PESEL:</td>
+                <td>
+                    <input type="text" id="pesel">
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <button id="generate_pesel" type="button">GENERUJ</button>
+                </td>
+            </tr>
+        </table>
+
+        <h2>REGON 12</h2>
+        <table>
+            <tr>
+                <td>REGON:</td>
+                <td>
+                    <input type="text" id="regon">
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <button id="generate_regon" type="button">GENERUJ</button>
+                </td>
+            </tr>
+        </table>
+
+        <h2>NIP</h2>
+        <table>
+            <tr>
+                <td>NIP:</td>
+                <td>
+                    <input type="text" id="nip">
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <button id="generate_nip" type="button">GENERUJ</button>
+                </td>
+            </tr>
+        </table>
+
+
+
+        <script type="text/javascript">
+            (function() {
+                var rand = function(min, max) {
+                    return min + Math.floor((max - min) * Math.random());
+                };
+
+                var getMonthOffsetForPesel = function(century) {
+                    switch (century) {
+                    case 18: return 80;
+                    case 19: return 0;
+                    case 20: return 20;
+                    case 21: return 40;
+                    case 22: return 60;
+                    }
+                };
+
+                var daysInMonth = function(year, month) {
+                    // JS - month are zero based, but days are 1 based
+                    // so 1 is first day of month.
+                    // If we pass 0 day of next month - we get LAST day of month.
+                    return new Date(year, month + 1, 0).getDate();
+                };
+
+                var last2Digits = function(number) {
+                    var n = Math.floor(number % 100);
+                    return ('00' + n.toString(10)).slice(-2);
+                };
+
+                var computePeselControlDigit = function(rawPesel) {
+                    var peselDigits = rawPesel.split('').map(function(d) { return +d; });
+                    var weigths = [1,3,7,9,1,3,7,9,1,3];
+                    
+                    var sum1 = 0, i;
+                    for (i = 0; i < weigths.length; i += 1) {
+                        sum1 += weigths[i] * peselDigits[i];
+                    }
+
+                    sum1 = (10 - (sum1 % 10)) % 10;
+                    return sum1;
+                };
+
+                var generatePesel = function() {
+                    var birthYear = rand(1800, 2300);
+
+                    var century = Math.floor(birthYear / 100);
+                    var monthOffset = getMonthOffsetForPesel(century);
+
+                    var birthMonth = rand(1, 13);
+                    var birthDay = rand(1, daysInMonth(birthYear, birthMonth) + 1);
+                    var peselMonth = birthMonth + monthOffset;
+
+                    var fourRandomDigits = ('0000' + rand(0, 10000).toString(10)).slice(-4);
+
+                    var rawPesel = last2Digits(birthYear) +
+                        last2Digits(peselMonth) +
+                        last2Digits(birthDay) + 
+                        fourRandomDigits;
+
+                    var controlDigit = computePeselControlDigit(rawPesel);
+                    return rawPesel + controlDigit;
+                };
+
+                var generateRegon9 = function() {
+                    var firstHalf = ('00000' + rand(0, 100000).toString(10)).slice(-5);
+                    var secondHalf = ('000' + rand(0, 1000).toString(10)).slice(-3);
+                    var rawRegon = firstHalf + secondHalf;
+
+                    var weights = [8, 9, 2, 3, 4, 5, 6, 7];
+                    var sum = 0, i;
+
+                    for (i = 0; i < weights.length; i += 1) {
+                        sum += weights[i] * (+rawRegon.charAt(i));
+                    }
+
+                    sum = (sum % 11) % 10;
+                    return rawRegon + sum.toString(10);
+
+                };
+
+                var generateRegon14 = function() {
+                    // regon 14 - CONTAINS regon 9 - check wikipedia
+                    var firstHalf = generateRegon9();
+                    var secondHalf = ('0000' + rand(0, 10000).toString(10)).slice(-4);
+                    var rawRegon = firstHalf + secondHalf;
+
+                    var weights = [2, 4, 8, 5, 0, 9, 7, 3, 6, 1, 2, 4, 8];
+                    var sum = 0, i;
+
+                    for (i = 0; i < weights.length; i += 1) {
+                        sum += weights[i] * (+rawRegon.charAt(i));
+                    }
+
+                    sum = (sum % 11) % 10;
+                    return rawRegon + sum.toString(10);
+                };
+
+                var generateNip = function() {
+                    var taxOfficeId = rand(1,10).toString(10) + rand(1, 10).toString(10) + rand(1, 10).toString(10);
+                    var rest = ('000000' + rand(0, 1000000).toString(10)).slice(-6);
+                    var rawNip = taxOfficeId + rest;
+
+                    var weights = [6, 5, 7, 2, 3, 4, 5, 6, 7];
+                    var sum = 0, i;
+
+                    for (i = 0; i < weights.length; i += 1) {
+                        sum += weights[i] * (+rawNip.charAt(i));
+                    }
+
+                    sum = sum % 11;
+                    return rawNip + sum.toString(10);
+                };
+
+                document.getElementById('generate_pesel').addEventListener('click', function() {
+                    document.getElementById('pesel').value = generatePesel();
+                });
+                document.getElementById('pesel').value = generatePesel();
+                
+                document.getElementById('generate_regon').addEventListener('click', function() {
+                    document.getElementById('regon').value = generateRegon14();
+                });
+                document.getElementById('regon').value = generateRegon14();
+                
+                document.getElementById('generate_nip').addEventListener('click', function() {
+                    document.getElementById('nip').value = generateNip();
+                });
+                document.getElementById('nip').value = generateNip();
+
+            }());
+        </script>
+    </body>
+</html>
