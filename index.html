@@ -21,7 +21,7 @@
             </tr>
         </table>
 
-        <h2>REGON 12</h2>
+        <h2>REGON 14</h2>
         <table>
             <tr>
                 <td>REGON:</td>
@@ -164,7 +164,14 @@
                     }
 
                     sum = sum % 11;
-                    return rawNip + sum.toString(10);
+
+                    if (sum === 10) {
+                        // valid NIP cannot have control sum equal 10
+                        return generateNip();
+                    }
+                    else {
+                        return rawNip + sum.toString(10);
+                    }
                 };
 
                 document.getElementById('generate_pesel').addEventListener('click', function() {
